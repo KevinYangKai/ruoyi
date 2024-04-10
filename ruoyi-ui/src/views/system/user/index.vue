@@ -15,6 +15,17 @@
         </div>
         <div class="head-container">
           <el-tree
+            :props="defaultProps"
+            :load="loadNode"
+            lazy
+            ref="tree"
+            node-key="id"
+            highlight-current
+            @node-click="handleNodeClick"
+          />
+        </div>
+<!--        <div class="head-container">
+          <el-tree
             :data="deptOptions"
             :props="defaultProps"
             :expand-on-click-node="false"
@@ -25,7 +36,7 @@
             highlight-current
             @node-click="handleNodeClick"
           />
-        </div>
+        </div>-->
       </el-col>
       <!--用户数据-->
       <el-col :span="20" :xs="24">
@@ -461,7 +472,8 @@ export default {
   },
   created() {
     this.getList();
-    this.getDeptTree();
+    // this.getDeptTree();
+    this.loadNode();
     this.getConfigKey("sys.user.initPassword").then(response => {
       this.initPassword = response.msg;
     });
@@ -477,10 +489,18 @@ export default {
         }
       );
     },
+    loadNode(node, resolve) {
+      if (node.level === 0) {
+        this.getDeptTree(-1, resolve);
+      } else {
+        this.getDeptTree(node, resolve);
+      }
+    },
     /** 查询部门下拉树结构 */
-    getDeptTree() {
-      deptTreeSelect().then(response => {
-        this.deptOptions = response.data;
+    getDeptTree(node, resolve) {
+      let searchNodeID = node ? node.data?.id || -1 : null;
+      deptTreeSelect(searchNodeID).then((response) => {
+        resolve(response.data);
       });
     },
     // 筛选节点

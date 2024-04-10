@@ -127,9 +127,9 @@ export function updateAuthRole(data) {
 }
 
 // 查询部门下拉树结构
-export function deptTreeSelect() {
+export function deptTreeSelect(parentId) {
   return request({
-    url: '/system/user/deptTree',
+    url: '/system/user/deptTree?parentId=' + parentId,
     method: 'get'
   })
 }
