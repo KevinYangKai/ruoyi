@@ -20,6 +20,14 @@ public interface ISysDeptService
     public List<SysDept> selectDeptList(SysDept dept);
 
     /**
+     * 查询部门管理数据
+     *
+     * @param dept 部门信息
+     * @return 部门信息集合
+     */
+    public List<Long> selectDeptList(List<Long> deptId);
+
+    /**
      * 查询部门树结构信息
      * 
      * @param dept 部门信息
@@ -84,6 +92,14 @@ public interface ISysDeptService
     public boolean checkDeptExistUser(Long deptId);
 
     /**
+     * 查询部门是否存在用户
+     *
+     * @param deptIds 部门ID
+     * @return 结果 true 存在 false 不存在
+     */
+    public boolean checkDeptExistUser(List<Long> deptIds);
+
+    /**
      * 校验部门名称是否唯一
      * 
      * @param dept 部门信息
@@ -92,11 +108,26 @@ public interface ISysDeptService
     public boolean checkDeptNameUnique(SysDept dept);
 
     /**
+     * 获取部门id及其子节点id
+     *
+     * @param deptId 部门id
+     * @return
+     */
+    List<Long> getAllDeptIds(Long deptId);
+
+    /**
      * 校验部门是否有数据权限
      * 
      * @param deptId 部门id
      */
     public void checkDeptDataScope(Long deptId);
+
+    /**
+     * 校验部门是否有数据权限
+     *
+     * @param deptId 部门id
+     */
+    public void checkDeptDataScope(List<Long> deptId);
 
     /**
      * 新增保存部门信息
@@ -121,4 +152,12 @@ public interface ISysDeptService
      * @return 结果
      */
     public int deleteDeptById(Long deptId);
+
+    /**
+     * 删除部门管理信息
+     *
+     * @param deptIds 部门IDs
+     * @return 结果
+     */
+    public int deleteDeptByIds(List<Long> deptIds);
 }

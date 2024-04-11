@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.common.annotation.DataScope;
@@ -20,6 +22,7 @@ import com.ruoyi.common.utils.spring.SpringUtils;
 import com.ruoyi.system.mapper.SysDeptMapper;
 import com.ruoyi.system.mapper.SysRoleMapper;
 import com.ruoyi.system.service.ISysDeptService;
+import org.springframework.util.CollectionUtils;
 
 /**
  * 部门管理 服务实现
@@ -46,6 +49,19 @@ public class SysDeptServiceImpl implements ISysDeptService
     public List<SysDept> selectDeptList(SysDept dept)
     {
         return deptMapper.selectDeptList(dept);
+    }
+
+    /**
+     * 查询部门管理数据
+     *
+     * @param deptIds 部门信息
+     * @return 部门信息集合
+     */
+    @Override
+    @DataScope(deptAlias = "d")
+    public List<Long> selectDeptList(List<Long> deptIds)
+    {
+        return deptMapper.selectDeptListByDeptIds(deptIds);
     }
 
     /**
@@ -165,6 +181,31 @@ public class SysDeptServiceImpl implements ISysDeptService
     }
 
     /**
+     * 查询部门是否存在用户
+     *
+     * @param deptIds 部门ID
+     * @return 结果 true 存在 false 不存在
+     */
+    @Override
+    public boolean checkDeptExistUser(List<Long> deptIds) {
+        int result = deptMapper.checkDeptsExistUser(deptIds);
+        return result > 0;
+    }
+
+    /**
+     * 递归获取所有子部门id
+     *
+     * @param deptIds
+     */
+    private void addAllChildren(List<Long> deptIds) {
+        List<Long> deptIdsList = deptMapper.selectChildDeptIdsByParentIds(deptIds);
+        if (!CollectionUtils.isEmpty(deptIdsList)) {
+            addAllChildren(deptIdsList);
+            deptIds.addAll(deptIdsList);
+        }
+    }
+
+    /**
      * 校验部门名称是否唯一
      * 
      * @param dept 部门信息
@@ -182,6 +223,14 @@ public class SysDeptServiceImpl implements ISysDeptService
         return UserConstants.UNIQUE;
     }
 
+    @Override
+    public List<Long> getAllDeptIds(Long deptId) {
+        List<Long> deptIds = new ArrayList<>();
+        deptIds.add(deptId);
+        addAllChildren(deptIds);
+        return deptIds;
+    }
+
     /**
      * 校验部门是否有数据权限
      * 
@@ -196,6 +245,25 @@ public class SysDeptServiceImpl implements ISysDeptService
             dept.setDeptId(deptId);
             List<SysDept> depts = SpringUtils.getAopProxy(this).selectDeptList(dept);
             if (StringUtils.isEmpty(depts))
+            {
+                throw new ServiceException("没有权限访问部门数据！");
+            }
+        }
+    }
+
+    /**
+     * 校验部门是否有数据权限
+     *
+     * @param deptIds 部门ids
+     */
+    @Override
+    public void checkDeptDataScope(List<Long> deptIds)
+    {
+        if (!SysUser.isAdmin(SecurityUtils.getUserId()))
+        {
+            List<Long> deptIdList = SpringUtils.getAopProxy(this).selectDeptList(deptIds);
+            deptIds.retainAll(deptIdList);
+            if (CollectionUtils.isEmpty(deptIds))
             {
                 throw new ServiceException("没有权限访问部门数据！");
             }
@@ -291,6 +359,18 @@ public class SysDeptServiceImpl implements ISysDeptService
     public int deleteDeptById(Long deptId)
     {
         return deptMapper.deleteDeptById(deptId);
+    }
+
+    /**
+     * 删除部门管理信息
+     *
+     * @param deptIds 部门IDs
+     * @return 结果
+     */
+    @Override
+    public int deleteDeptByIds(List<Long> deptIds)
+    {
+        return deptMapper.deleteDeptByIds(deptIds);
     }
 
     /**

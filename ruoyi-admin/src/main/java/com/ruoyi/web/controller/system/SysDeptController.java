@@ -5,14 +5,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.constant.UserConstants;
 import com.ruoyi.common.core.controller.BaseController;
@@ -115,18 +108,20 @@ public class SysDeptController extends BaseController
      */
     @PreAuthorize("@ss.hasPermi('system:dept:remove')")
     @Log(title = "部门管理", businessType = BusinessType.DELETE)
-    @DeleteMapping("/{deptId}")
-    public AjaxResult remove(@PathVariable Long deptId)
+//    @DeleteMapping("/{deptId}")
+    @DeleteMapping()
+    public AjaxResult remove(@RequestParam Long deptId, @RequestParam(required = false, defaultValue = "0") Byte forceDelete)
     {
-        if (deptService.hasChildByDeptId(deptId))
+        if (Byte.valueOf((byte) 0).equals(forceDelete) && deptService.hasChildByDeptId(deptId))
         {
             return warn("存在下级部门,不允许删除");
         }
-        if (deptService.checkDeptExistUser(deptId))
+        List<Long> deptIds = deptService.getAllDeptIds(deptId);
+        if (deptService.checkDeptExistUser(deptIds))
         {
             return warn("部门存在用户,不允许删除");
         }
-        deptService.checkDeptDataScope(deptId);
-        return toAjax(deptService.deleteDeptById(deptId));
+        deptService.checkDeptDataScope(deptIds);
+        return toAjax(deptService.deleteDeptByIds(deptIds));
     }
 }

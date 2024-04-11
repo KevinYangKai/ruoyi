@@ -16,7 +16,7 @@
         <div class="head-container">
           <el-tree
             :props="defaultProps"
-            :load="loadNode"
+            :load="getDeptTree"
             lazy
             ref="tree"
             node-key="id"
@@ -473,7 +473,7 @@ export default {
   created() {
     this.getList();
     // this.getDeptTree();
-    this.loadNode();
+    this.getDeptTree();
     this.getConfigKey("sys.user.initPassword").then(response => {
       this.initPassword = response.msg;
     });
@@ -489,16 +489,9 @@ export default {
         }
       );
     },
-    loadNode(node, resolve) {
-      if (node.level === 0) {
-        this.getDeptTree(-1, resolve);
-      } else {
-        this.getDeptTree(node, resolve);
-      }
-    },
     /** 查询部门下拉树结构 */
     getDeptTree(node, resolve) {
-      let searchNodeID = node ? node.data?.id || -1 : null;
+      let searchNodeID = node ? node.data?.id || -1 : -1;
       deptTreeSelect(searchNodeID).then((response) => {
         resolve(response.data);
       });
