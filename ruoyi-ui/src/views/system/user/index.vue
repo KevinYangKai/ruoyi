@@ -15,13 +15,13 @@
         </div>
         <div class="head-container">
           <el-tree
+            :data="deptOptions"
             :props="defaultProps"
             :load="getDeptTree"
             lazy
             ref="tree"
             node-key="id"
             highlight-current
-            @node-click="handleNodeClick"
           />
         </div>
 <!--        <div class="head-container">
@@ -224,7 +224,12 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="归属部门" prop="deptId">
-              <treeselect v-model="form.deptId" :options="deptOptions" :show-count="true" placeholder="请选择归属部门" />
+              <treeselect
+                v-model="form.deptId"
+                :options="defaultDeptOptions"
+                :load-options="loadOptions"
+                :show-count="false"
+                placeholder="请选择归属部门" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -354,7 +359,7 @@
 <script>
 import { listUser, getUser, delUser, addUser, updateUser, resetUserPwd, changeUserStatus, deptTreeSelect } from "@/api/system/user";
 import { getToken } from "@/utils/auth";
-import Treeselect from "@riophae/vue-treeselect";
+import { Treeselect,LOAD_ROOT_OPTIONS,LOAD_CHILDREN_OPTIONS } from '@riophae/vue-treeselect'
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
 export default {
@@ -381,6 +386,12 @@ export default {
       title: "",
       // 部门树选项
       deptOptions: undefined,
+      defaultDeptOptions: [{
+        id: '100',
+        label: '若依科技',
+        // Declare an unloaded branch node.
+        children: null,
+      }],
       // 是否显示弹出层
       open: false,
       // 部门名称
@@ -397,7 +408,8 @@ export default {
       form: {},
       defaultProps: {
         children: "children",
-        label: "label"
+        label: "label",
+        isLeaf: "isLeaf",
       },
       // 用户导入参数
       upload: {
@@ -473,11 +485,17 @@ export default {
   created() {
     this.getList();
     // this.getDeptTree();
-    this.getDeptTree();
     this.getConfigKey("sys.user.initPassword").then(response => {
       this.initPassword = response.msg;
     });
+    deptTreeSelect(0).then((response) => {
+      this.data().defaultDeptOptions = response.data;
+      this.data().deptOptions = response.data;
+    });
   },
+  /*mounted() {
+    this.getDeptTree();
+  },*/
   methods: {
     /** 查询用户列表 */
     getList() {
@@ -491,10 +509,25 @@ export default {
     },
     /** 查询部门下拉树结构 */
     getDeptTree(node, resolve) {
-      let searchNodeID = node ? node.data?.id || -1 : -1;
+      let searchNodeID = node ? node.data?.id || 0 : 0;
       deptTreeSelect(searchNodeID).then((response) => {
         resolve(response.data);
       });
+    },
+    loadOptions(data) {
+      if (data.action === LOAD_ROOT_OPTIONS) {
+        console.log(data);
+        deptTreeSelect(0).then((response) => {
+          this.defaultDeptOptions = response.data;
+          // data.callback();
+        });
+      } else if (data.action === LOAD_CHILDREN_OPTIONS) {
+        let searchNodeID = data.parentNode ? data.parentNode?.id || 0 : 0;
+        deptTreeSelect(searchNodeID).then((response) => {
+          data.parentNode.children = response.data;
+          data.callback();
+        });
+      }
     },
     // 筛选节点
     filterNode(value, data) {
