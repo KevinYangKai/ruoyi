@@ -3,6 +3,7 @@ package com.ruoyi.system.service.impl;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.compress.utils.Lists;
@@ -74,6 +75,12 @@ public class SysDeptServiceImpl implements ISysDeptService
     public List<TreeSelect> selectDeptTreeList(SysDept dept)
     {
         List<SysDept> depts = SpringUtils.getAopProxy(this).selectDeptList(dept);
+        List<Long> ids = depts.stream().map(SysDept::getDeptId).collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(ids)) {
+            List<SysDept> children = deptMapper.selectChildrenDeptByIds(ids);
+            Map<Long, List<SysDept>> map = children.stream().collect(Collectors.groupingBy(SysDept::getParentId));
+            depts.forEach(d -> d.setLeaf(!map.containsKey(d.getDeptId())));
+        }
         return buildDeptTreeSelect(depts);
     }
 

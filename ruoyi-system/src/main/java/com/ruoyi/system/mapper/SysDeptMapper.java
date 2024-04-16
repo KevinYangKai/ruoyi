@@ -53,6 +53,14 @@ public interface SysDeptMapper
     public List<SysDept> selectChildrenDeptById(Long deptId);
 
     /**
+     * 根据ID查询所有子部门
+     *
+     * @param deptIds 部门ID
+     * @return 部门列表
+     */
+    public List<SysDept> selectChildrenDeptByIds(@Param("deptIds") List<Long> deptIds);
+
+    /**
      * 根据ID查询所有子部门（正常状态）
      * 
      * @param deptId 部门ID
